@@ -20,7 +20,16 @@ class Product(Model):
     description = CharField()
     stock = IntegerField()
     owner = ForeignKeyField(User, backref='products')
-    tags = CharField(unique=True)
+    tags = ForeignKeyField('ProductTag', backref='products')
+
+    class Meta:
+        database = db
+
+
+class ProductTag(Model):
+    tagId = PrimaryKeyField()
+    tag = CharField()
+    product = ForeignKeyField(Product, backref='tags')
 
     class Meta:
         database = db
@@ -34,22 +43,3 @@ class Purchase(Model):
 
     class Meta:
         database = db
-
-
-def create_tables():
-    with db:
-        db.drop_tables([User, Product, Purchase])
-        db.create_tables([User, Product, Purchase])
-
-
-def populate_tables():
-    i = 0
-    while i < 10:
-        tags = 'tag ' + str(i)
-        User.create(username='test', adress='test', billingInfo='test')
-        Product.create(name='test', price=1.0, description='test', stock=1, owner=1, tags=tags)
-        i += 1
-    print('Tables populated!')
-
-
-create_tables()
