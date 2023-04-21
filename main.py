@@ -4,14 +4,14 @@ db = SqliteDatabase('betsyWebshop.db')
 
 
 def searchProducts(searchString):
-    name_results = Product.select().where(Product.name.contains(searchString))
-    description_results = Product.select().where(Product.description.contains(searchString))
-    products = name_results.union(description_results)
-    return products
+    products = set()
+    products |= set(Product.select().where(Product.name.contains(searchString)))
+    products |= set(Product.select().where(Product.description.contains(searchString)))
+    return list(products)
 
 
 def searchProductsByTag(tags):
-    return Product.select().where(Product.tags.contains(ProductTag.select().where(ProductTag.tag == tags)))
+    return Product.select().where(Product.tags.contains(tags))
 
 
 def searchProductsByOwner(userid):
@@ -19,16 +19,10 @@ def searchProductsByOwner(userid):
 
 
 def addProduct(name, price, description, stock, owner, tags):
-    tag = ProductTag.create(tag=tags)
-    Product.create(name=name, price=price, description=description, stock=stock, owner=owner, tags=tag)
-
-
-def addTagToProduct(productid, tag):
-    ProductTag.create(tag=tag, product=productid)
+    Product.create(name=name, price=price, description=description, stock=stock, owner=owner, tags=tags)
 
 
 def removeProduct(productid):
-    ProductTag.delete().where(ProductTag.product == productid).execute()
     Product.delete().where(Product.productId == productid).execute()
 
 
@@ -36,9 +30,14 @@ def updateStock(productid, newStock):
     Product.update(stock=newStock).where(Product.productId == productid)
 
 
+def getStock(productid):
+    return Product.select(Product.stock).where(Product.productId == productid)
+
+
 def addPurchase(userid, productid, quantity):
     Purchase.create(buyer=userid, product=productid, quantity=quantity)
-    updateStock(productid, Product.select().where(Product.productId == productid).stock - quantity)
+    newStock = int(getStock(productid)) - quantity
+    updateStock(productid, newStock)
 
 
 def create_tables():
@@ -52,17 +51,15 @@ def populate_tables():
     while i < 10:
         tags = 'tag ' + str(i)
         User.create(username='test', adress='test', billingInfo='test')
-        ProductTag.create(tag=tags)
-        Product.create(name='test', price=1.0, description='test', stock=1, owner=1,
-                       tags=(ProductTag.select().where(ProductTag.tag == tags)))
+        Product.create(name='test', price=1.0, description='test', stock=1, owner=1, tags=tags)
         i += 1
     print('Tables populated!')
 
 
 if __name__ == '__main__':
-    # create_tables()
-    # populate_tables()
-    print(searchProducts('test'))
+    create_tables()
+    populate_tables()
+    # searchProducts('test')
     # searchProductsByTag('test')
     # searchProductsByOwner(1)
     # addProduct('test', 1.0, 'test', 1, 1, 'test')

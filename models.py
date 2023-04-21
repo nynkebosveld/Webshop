@@ -20,16 +20,7 @@ class Product(Model):
     description = CharField()
     stock = IntegerField()
     owner = ForeignKeyField(User, backref='products')
-    tags = ForeignKeyField('ProductTag', backref='products')
-
-    class Meta:
-        database = db
-
-
-class ProductTag(Model):
-    tagId = PrimaryKeyField()
-    tag = CharField()
-    product = ForeignKeyField(Product, backref='tags')
+    tags = CharField(unique=True)
 
     class Meta:
         database = db
