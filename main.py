@@ -1,6 +1,5 @@
 from models import *
-
-db = SqliteDatabase('betsyWebshop.db')
+from models import Product
 
 
 def searchProducts(searchString):
@@ -11,23 +10,29 @@ def searchProducts(searchString):
 
 
 def searchProductsByTag(tags):
-    return Product.select().where(Product.tags.contains(tags))
+    Product.select().join(ProductTag).where(Tag.name.contains(tags))
+    # return Product.select().where(Product.tags.contains(tags))
 
 
 def searchProductsByOwner(userid):
-    return Product.select().where(Product.owner.contains(userid))
+    return Product.select().where(Product.owner.contains(str(userid)))
 
 
 def addProduct(name, price, description, stock, owner, tags):
-    Product.create(name=name, price=price, description=description, stock=stock, owner=owner, tags=tags)
+    product: Product = Product.create(name=name, price=price, description=description, stock=stock, owner=owner)
+    # product = Product.select().where(Product.name.contains(name) & Product.owner.contains(owner))
+    tag: Tag = Tag.create(name=tags)
+    ProductTag.create(product, tag)
 
 
 def removeProduct(productid):
+    product = Product.select().where(Product.productId == productid)
+    ProductTag.delete().where(Product=product).excexute()
     Product.delete().where(Product.productId == productid).execute()
 
 
 def updateStock(productid, newStock):
-    Product.update(stock=newStock).where(Product.productId == productid)
+    Product.update(stock=newStock).where(Product.productId == productid).execute()
 
 
 def getStock(productid):
@@ -36,7 +41,11 @@ def getStock(productid):
 
 def addPurchase(userid, productid, quantity):
     Purchase.create(buyer=userid, product=productid, quantity=quantity)
-    newStock = int(getStock(productid)) - quantity
+    stock = int(getStock(productid)[0].stock)
+    if stock > quantity:
+        newStock = stock - quantity
+    else:
+        return print("Te weinig stock")
     updateStock(productid, newStock)
 
 

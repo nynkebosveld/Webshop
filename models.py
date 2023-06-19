@@ -20,10 +20,21 @@ class Product(Model):
     description = CharField()
     stock = IntegerField()
     owner = ForeignKeyField(User, backref='products')
-    tags = CharField(unique=True)
 
     class Meta:
         database = db
+
+
+class Tag(Model):
+    name = CharField(unique=True)
+
+    class Meta:
+        database = db
+
+
+class ProductTag(Model):
+    product = ForeignKeyField(Product)
+    tag = ForeignKeyField(Tag)
 
 
 class Purchase(Model):
